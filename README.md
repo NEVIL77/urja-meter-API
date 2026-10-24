@@ -8,12 +8,13 @@ You need **Node.js 24** or newer.
 
 ```
 PORTAL_URL=https://urja-ops.flockenergy.tech
-PORTAL_EMAIL=operator@urja.local 
-PORTAL_PASSWORD=urja-ops-2026 
+PORTAL_EMAIL=
+PORTAL_PASSWORD=
 
 PORT=3000
 SNAPSHOT_TTL_SECONDS=900
 ```
+here please enter the portal email and password , if help needed see the PROTOCOL.md for email and password.
 
 3. Install dependencies:
 

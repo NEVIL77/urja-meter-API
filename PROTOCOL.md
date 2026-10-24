@@ -108,3 +108,7 @@ If a Transformer (DT) delivers 1,000 kWh of energy, but the sum of all Meters co
 It tells operators the exact electrical source feeding meter J100000 without requiring physical inspection of field wiring.
 
 💡 **Improvement scope:** as we have lat and long data, we can get the direction in the new UI or Google Maps so that a newly joined employee who is not familiar with the area can get the exact location of each hierarchy point.
+
+
+PORTAL_EMAIL=operator@urja.local 
+PORTAL_PASSWORD=urja-ops-2026 
