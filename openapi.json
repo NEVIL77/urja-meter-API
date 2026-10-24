@@ -1,0 +1,2711 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Urja Meter API",
+    "version": "1.0.0",
+    "description": "A clean, read-only API over the Urja Meter Ops portal: smart meters, where they sit in the network, and their readings."
+  },
+  "components": {
+    "schemas": {}
+  },
+  "paths": {
+    "/meters": {
+      "get": {
+        "operationId": "listMeters",
+        "summary": "Search and filter meters",
+        "tags": [
+          "meters"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "description": "Part of a meter id or serial number, any case."
+          },
+          {
+            "schema": {
+              "enum": [
+                "installed",
+                "faulty",
+                "decommissioned"
+              ]
+            },
+            "in": "query",
+            "name": "status",
+            "required": false
+          },
+          {
+            "schema": {
+              "enum": [
+                "single",
+                "three"
+              ]
+            },
+            "in": "query",
+            "name": "phase",
+            "required": false
+          },
+          {
+            "schema": {
+              "enum": [
+                "whole_current",
+                "ct_operated"
+              ]
+            },
+            "in": "query",
+            "name": "installType",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "example": "Genus",
+            "in": "query",
+            "name": "make",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "example": "Z-01",
+            "in": "query",
+            "name": "zone",
+            "required": false,
+            "description": "Exact zone code. Codes repeat across branches; see /hierarchy."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "example": "C-01",
+            "in": "query",
+            "name": "circle",
+            "required": false,
+            "description": "Exact circle code. Codes repeat across branches; see /hierarchy."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "example": "D-01",
+            "in": "query",
+            "name": "division",
+            "required": false,
+            "description": "Exact division code. Codes repeat across branches; see /hierarchy."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "example": "SD-01",
+            "in": "query",
+            "name": "subdivision",
+            "required": false,
+            "description": "Exact subdivision code. Codes repeat across branches; see /hierarchy."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "example": "SS-01",
+            "in": "query",
+            "name": "substation",
+            "required": false,
+            "description": "Exact substation code. Codes repeat across branches; see /hierarchy."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "example": "F-001",
+            "in": "query",
+            "name": "feeder",
+            "required": false,
+            "description": "Exact feeder code. Codes repeat across branches; see /hierarchy."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "example": "DT-001",
+            "in": "query",
+            "name": "transformer",
+            "required": false,
+            "description": "Exact transformer code. Codes repeat across branches; see /hierarchy."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "example": "Z-01/C-01/D-01",
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "description": "Meters under one node of the tree, by its path from /hierarchy. Unlike codes, paths are unique."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^-?\\d+(\\.\\d+)?,-?\\d+(\\.\\d+)?$"
+            },
+            "example": "26.9124,75.7873",
+            "in": "query",
+            "name": "near",
+            "required": false,
+            "description": "lat,lng. Keeps meters within radiusKm and sorts them nearest first."
+          },
+          {
+            "schema": {
+              "type": "number",
+              "default": 1,
+              "exclusiveMinimum": 0,
+              "maximum": 50
+            },
+            "in": "query",
+            "name": "radiusKm",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "minimum": 1,
+              "maximum": 500
+            },
+            "in": "query",
+            "name": "limit",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            },
+            "in": "query",
+            "name": "offset",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "syncedAt",
+                    "total",
+                    "limit",
+                    "offset",
+                    "items"
+                  ],
+                  "properties": {
+                    "syncedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "When the data was last copied from the portal."
+                    },
+                    "total": {
+                      "type": "integer",
+                      "description": "Matches before limit and offset."
+                    },
+                    "limit": {
+                      "type": "integer"
+                    },
+                    "offset": {
+                      "type": "integer"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "serialNo",
+                          "make",
+                          "phase",
+                          "status",
+                          "installType",
+                          "location",
+                          "hierarchy"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "examples": [
+                              "J100000"
+                            ]
+                          },
+                          "serialNo": {
+                            "type": "string",
+                            "examples": [
+                              "SE33962"
+                            ]
+                          },
+                          "make": {
+                            "type": "string",
+                            "examples": [
+                              "HPL"
+                            ]
+                          },
+                          "phase": {
+                            "enum": [
+                              "single",
+                              "three"
+                            ]
+                          },
+                          "status": {
+                            "enum": [
+                              "installed",
+                              "faulty",
+                              "decommissioned"
+                            ]
+                          },
+                          "installType": {
+                            "enum": [
+                              "whole_current",
+                              "ct_operated"
+                            ]
+                          },
+                          "location": {
+                            "type": "object",
+                            "required": [
+                              "lat",
+                              "lng"
+                            ],
+                            "properties": {
+                              "lat": {
+                                "type": "number"
+                              },
+                              "lng": {
+                                "type": "number"
+                              }
+                            }
+                          },
+                          "hierarchy": {
+                            "type": "object",
+                            "required": [
+                              "zone",
+                              "circle",
+                              "division",
+                              "subdivision",
+                              "substation",
+                              "feeder",
+                              "transformer"
+                            ],
+                            "properties": {
+                              "zone": {
+                                "type": "object",
+                                "required": [
+                                  "code",
+                                  "name"
+                                ],
+                                "properties": {
+                                  "code": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  }
+                                }
+                              },
+                              "circle": {
+                                "type": "object",
+                                "required": [
+                                  "code",
+                                  "name"
+                                ],
+                                "properties": {
+                                  "code": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  }
+                                }
+                              },
+                              "division": {
+                                "type": "object",
+                                "required": [
+                                  "code",
+                                  "name"
+                                ],
+                                "properties": {
+                                  "code": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  }
+                                }
+                              },
+                              "subdivision": {
+                                "type": "object",
+                                "required": [
+                                  "code",
+                                  "name"
+                                ],
+                                "properties": {
+                                  "code": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  }
+                                }
+                              },
+                              "substation": {
+                                "type": "object",
+                                "required": [
+                                  "code",
+                                  "name"
+                                ],
+                                "properties": {
+                                  "code": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  }
+                                }
+                              },
+                              "feeder": {
+                                "type": "object",
+                                "required": [
+                                  "code",
+                                  "name"
+                                ],
+                                "properties": {
+                                  "code": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  }
+                                }
+                              },
+                              "transformer": {
+                                "type": "object",
+                                "required": [
+                                  "code",
+                                  "name"
+                                ],
+                                "properties": {
+                                  "code": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  }
+                                }
+                              }
+                            },
+                            "description": "Where the meter sits in the network, from zone down to its distribution transformer."
+                          },
+                          "distanceKm": {
+                            "type": "number",
+                            "description": "Only present when near is given."
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Every error has this shape.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "examples": [
+                            "not_found"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "description": "Every error has this shape."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Every error has this shape.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "examples": [
+                            "not_found"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "description": "Every error has this shape."
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The portal failed or answered something unexpected.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "examples": [
+                            "not_found"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "description": "The portal failed or answered something unexpected."
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The portal is rate-limiting us. Retry after the number of seconds in the Retry-After header.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "examples": [
+                            "not_found"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "description": "The portal is rate-limiting us. Retry after the number of seconds in the Retry-After header."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/meters/{id}": {
+      "get": {
+        "operationId": "getMeter",
+        "summary": "One meter, with its place in the network and its location",
+        "tags": [
+          "meters"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "example": "J100000",
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "serialNo",
+                    "make",
+                    "phase",
+                    "status",
+                    "installType",
+                    "location",
+                    "hierarchy"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "examples": [
+                        "J100000"
+                      ]
+                    },
+                    "serialNo": {
+                      "type": "string",
+                      "examples": [
+                        "SE33962"
+                      ]
+                    },
+                    "make": {
+                      "type": "string",
+                      "examples": [
+                        "HPL"
+                      ]
+                    },
+                    "phase": {
+                      "enum": [
+                        "single",
+                        "three"
+                      ]
+                    },
+                    "status": {
+                      "enum": [
+                        "installed",
+                        "faulty",
+                        "decommissioned"
+                      ]
+                    },
+                    "installType": {
+                      "enum": [
+                        "whole_current",
+                        "ct_operated"
+                      ]
+                    },
+                    "location": {
+                      "type": "object",
+                      "required": [
+                        "lat",
+                        "lng"
+                      ],
+                      "properties": {
+                        "lat": {
+                          "type": "number"
+                        },
+                        "lng": {
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "hierarchy": {
+                      "type": "object",
+                      "required": [
+                        "zone",
+                        "circle",
+                        "division",
+                        "subdivision",
+                        "substation",
+                        "feeder",
+                        "transformer"
+                      ],
+                      "properties": {
+                        "zone": {
+                          "type": "object",
+                          "required": [
+                            "code",
+                            "name"
+                          ],
+                          "properties": {
+                            "code": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "circle": {
+                          "type": "object",
+                          "required": [
+                            "code",
+                            "name"
+                          ],
+                          "properties": {
+                            "code": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "division": {
+                          "type": "object",
+                          "required": [
+                            "code",
+                            "name"
+                          ],
+                          "properties": {
+                            "code": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "subdivision": {
+                          "type": "object",
+                          "required": [
+                            "code",
+                            "name"
+                          ],
+                          "properties": {
+                            "code": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "substation": {
+                          "type": "object",
+                          "required": [
+                            "code",
+                            "name"
+                          ],
+                          "properties": {
+                            "code": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "feeder": {
+                          "type": "object",
+                          "required": [
+                            "code",
+                            "name"
+                          ],
+                          "properties": {
+                            "code": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "transformer": {
+                          "type": "object",
+                          "required": [
+                            "code",
+                            "name"
+                          ],
+                          "properties": {
+                            "code": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      },
+                      "description": "Where the meter sits in the network, from zone down to its distribution transformer."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Every error has this shape.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "examples": [
+                            "not_found"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "description": "Every error has this shape."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Every error has this shape.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "examples": [
+                            "not_found"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "description": "Every error has this shape."
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The portal failed or answered something unexpected.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "examples": [
+                            "not_found"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "description": "The portal failed or answered something unexpected."
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The portal is rate-limiting us. Retry after the number of seconds in the Retry-After header.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "examples": [
+                            "not_found"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "description": "The portal is rate-limiting us. Retry after the number of seconds in the Retry-After header."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/meters/{id}/readings": {
+      "get": {
+        "operationId": "getMeterReadings",
+        "summary": "Energy readings for one meter, oldest first",
+        "tags": [
+          "meters"
+        ],
+        "description": "Readings are fetched from the portal on demand and cached for five minutes. If the portal fails, the last good readings are served; check fetchedAt.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}(T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?(Z|[+-]\\d{2}:\\d{2}))?$"
+            },
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "description": "Start, inclusive. A bare date means 00:00 IST that day."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}(T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?(Z|[+-]\\d{2}:\\d{2}))?$"
+            },
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "description": "End, inclusive. A bare date includes that whole IST day."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "example": "J100000",
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "meterId",
+                    "fetchedAt",
+                    "intervalMinutes",
+                    "totalKwhUsed",
+                    "duplicatesDropped",
+                    "readings"
+                  ],
+                  "properties": {
+                    "meterId": {
+                      "type": "string"
+                    },
+                    "fetchedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "When these readings were fetched from the portal."
+                    },
+                    "intervalMinutes": {
+                      "anyOf": [
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Usually 30 or 1440 (daily)."
+                    },
+                    "totalKwhUsed": {
+                      "type": "number",
+                      "description": "Sum of kwhUsed over the returned readings."
+                    },
+                    "duplicatesDropped": {
+                      "type": "integer",
+                      "description": "Rows the portal sent twice for the same time. We keep the most complete one."
+                    },
+                    "readings": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "timestamp",
+                          "kwhCumulative",
+                          "kvahCumulative",
+                          "voltageR",
+                          "kwhUsed"
+                        ],
+                        "properties": {
+                          "timestamp": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "India Standard Time (+05:30). The portal sends DD/MM/YYYY HH:mm with no time zone."
+                          },
+                          "kwhCumulative": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Active energy register in kWh. It only goes up. Null when the portal sent it blank."
+                          },
+                          "kvahCumulative": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Apparent energy register in kVAh. It only goes up. Null when the portal sent it blank."
+                          },
+                          "voltageR": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "R-phase voltage in volts. Null when the portal sent it blank."
+                          },
+                          "kwhUsed": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "kWh used since the previous reading that had a kWh value. Null for the first reading, when this one has no kWh value, and if the register went backwards."
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Every error has this shape.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "examples": [
+                            "not_found"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "description": "Every error has this shape."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Every error has this shape.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "examples": [
+                            "not_found"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "description": "Every error has this shape."
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The portal failed or answered something unexpected.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "examples": [
+                            "not_found"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "description": "The portal failed or answered something unexpected."
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The portal is rate-limiting us. Retry after the number of seconds in the Retry-After header.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "examples": [
+                            "not_found"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "description": "The portal is rate-limiting us. Retry after the number of seconds in the Retry-After header."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transformers": {
+      "get": {
+        "operationId": "listTransformers",
+        "summary": "Every distribution transformer, with capacity and meter counts",
+        "tags": [
+          "network"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "syncedAt",
+                    "items"
+                  ],
+                  "properties": {
+                    "syncedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "When the data was last copied from the portal."
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "code",
+                          "name",
+                          "capacityKva",
+                          "hierarchy",
+                          "meters"
+                        ],
+                        "properties": {
+                          "code": {
+                            "type": "string",
+                            "examples": [
+                              "DT-001"
+                            ]
+                          },
+                          "name": {
+                            "type": "string",
+                            "examples": [
+                              "Malviya Nagar DT 1"
+                            ]
+                          },
+                          "capacityKva": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Null when the portal lists no capacity."
+                          },
+                          "hierarchy": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "required": [
+                                  "zone",
+                                  "circle",
+                                  "division",
+                                  "subdivision",
+                                  "substation",
+                                  "feeder",
+                                  "transformer"
+                                ],
+                                "properties": {
+                                  "zone": {
+                                    "type": "object",
+                                    "required": [
+                                      "code",
+                                      "name"
+                                    ],
+                                    "properties": {
+                                      "code": {
+                                        "type": "string"
+                                      },
+                                      "name": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  },
+                                  "circle": {
+                                    "type": "object",
+                                    "required": [
+                                      "code",
+                                      "name"
+                                    ],
+                                    "properties": {
+                                      "code": {
+                                        "type": "string"
+                                      },
+                                      "name": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  },
+                                  "division": {
+                                    "type": "object",
+                                    "required": [
+                                      "code",
+                                      "name"
+                                    ],
+                                    "properties": {
+                                      "code": {
+                                        "type": "string"
+                                      },
+                                      "name": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  },
+                                  "subdivision": {
+                                    "type": "object",
+                                    "required": [
+                                      "code",
+                                      "name"
+                                    ],
+                                    "properties": {
+                                      "code": {
+                                        "type": "string"
+                                      },
+                                      "name": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  },
+                                  "substation": {
+                                    "type": "object",
+                                    "required": [
+                                      "code",
+                                      "name"
+                                    ],
+                                    "properties": {
+                                      "code": {
+                                        "type": "string"
+                                      },
+                                      "name": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  },
+                                  "feeder": {
+                                    "type": "object",
+                                    "required": [
+                                      "code",
+                                      "name"
+                                    ],
+                                    "properties": {
+                                      "code": {
+                                        "type": "string"
+                                      },
+                                      "name": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  },
+                                  "transformer": {
+                                    "type": "object",
+                                    "required": [
+                                      "code",
+                                      "name"
+                                    ],
+                                    "properties": {
+                                      "code": {
+                                        "type": "string"
+                                      },
+                                      "name": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  }
+                                },
+                                "description": "Where the meter sits in the network, from zone down to its distribution transformer."
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Null when no meter tells us where it sits."
+                          },
+                          "meters": {
+                            "type": "object",
+                            "required": [
+                              "total",
+                              "installed",
+                              "faulty",
+                              "decommissioned"
+                            ],
+                            "properties": {
+                              "total": {
+                                "type": "integer"
+                              },
+                              "installed": {
+                                "type": "integer"
+                              },
+                              "faulty": {
+                                "type": "integer"
+                              },
+                              "decommissioned": {
+                                "type": "integer"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Every error has this shape.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "examples": [
+                            "not_found"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "description": "Every error has this shape."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Every error has this shape.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "examples": [
+                            "not_found"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "description": "Every error has this shape."
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The portal failed or answered something unexpected.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "examples": [
+                            "not_found"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "description": "The portal failed or answered something unexpected."
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The portal is rate-limiting us. Retry after the number of seconds in the Retry-After header.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "examples": [
+                            "not_found"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "description": "The portal is rate-limiting us. Retry after the number of seconds in the Retry-After header."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transformers/{code}": {
+      "get": {
+        "operationId": "getTransformer",
+        "summary": "One distribution transformer. Its meters are at /meters?transformer={code}",
+        "tags": [
+          "network"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "example": "DT-001",
+            "in": "path",
+            "name": "code",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "name",
+                    "capacityKva",
+                    "hierarchy",
+                    "meters"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "examples": [
+                        "DT-001"
+                      ]
+                    },
+                    "name": {
+                      "type": "string",
+                      "examples": [
+                        "Malviya Nagar DT 1"
+                      ]
+                    },
+                    "capacityKva": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Null when the portal lists no capacity."
+                    },
+                    "hierarchy": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "required": [
+                            "zone",
+                            "circle",
+                            "division",
+                            "subdivision",
+                            "substation",
+                            "feeder",
+                            "transformer"
+                          ],
+                          "properties": {
+                            "zone": {
+                              "type": "object",
+                              "required": [
+                                "code",
+                                "name"
+                              ],
+                              "properties": {
+                                "code": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "circle": {
+                              "type": "object",
+                              "required": [
+                                "code",
+                                "name"
+                              ],
+                              "properties": {
+                                "code": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "division": {
+                              "type": "object",
+                              "required": [
+                                "code",
+                                "name"
+                              ],
+                              "properties": {
+                                "code": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "subdivision": {
+                              "type": "object",
+                              "required": [
+                                "code",
+                                "name"
+                              ],
+                              "properties": {
+                                "code": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "substation": {
+                              "type": "object",
+                              "required": [
+                                "code",
+                                "name"
+                              ],
+                              "properties": {
+                                "code": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "feeder": {
+                              "type": "object",
+                              "required": [
+                                "code",
+                                "name"
+                              ],
+                              "properties": {
+                                "code": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "transformer": {
+                              "type": "object",
+                              "required": [
+                                "code",
+                                "name"
+                              ],
+                              "properties": {
+                                "code": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          },
+                          "description": "Where the meter sits in the network, from zone down to its distribution transformer."
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Null when no meter tells us where it sits."
+                    },
+                    "meters": {
+                      "type": "object",
+                      "required": [
+                        "total",
+                        "installed",
+                        "faulty",
+                        "decommissioned"
+                      ],
+                      "properties": {
+                        "total": {
+                          "type": "integer"
+                        },
+                        "installed": {
+                          "type": "integer"
+                        },
+                        "faulty": {
+                          "type": "integer"
+                        },
+                        "decommissioned": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Every error has this shape.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "examples": [
+                            "not_found"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "description": "Every error has this shape."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Every error has this shape.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "examples": [
+                            "not_found"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "description": "Every error has this shape."
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The portal failed or answered something unexpected.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "examples": [
+                            "not_found"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "description": "The portal failed or answered something unexpected."
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The portal is rate-limiting us. Retry after the number of seconds in the Retry-After header.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "examples": [
+                            "not_found"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "description": "The portal is rate-limiting us. Retry after the number of seconds in the Retry-After header."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hierarchy": {
+      "get": {
+        "operationId": "getHierarchy",
+        "summary": "The network as a tree, zone down to transformer, with meter counts at every node",
+        "tags": [
+          "network"
+        ],
+        "description": "dataQuality lists what we fixed or could not fix in the portal data: per-meter hierarchy copies we repaired, and codes the portal files under more than one parent.",
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "syncedAt",
+                    "levels",
+                    "tree",
+                    "dataQuality"
+                  ],
+                  "properties": {
+                    "syncedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "When the data was last copied from the portal."
+                    },
+                    "levels": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "examples": [
+                        [
+                          "zone",
+                          "circle",
+                          "division",
+                          "subdivision",
+                          "substation",
+                          "feeder",
+                          "transformer"
+                        ]
+                      ]
+                    },
+                    "tree": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "level",
+                          "code",
+                          "name",
+                          "path",
+                          "meters",
+                          "children"
+                        ],
+                        "properties": {
+                          "level": {
+                            "type": "string",
+                            "enum": [
+                              "zone"
+                            ]
+                          },
+                          "code": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "path": {
+                            "type": "string",
+                            "description": "Codes from the zone down, joined with \"/\". Use this, not code, to identify a node."
+                          },
+                          "meters": {
+                            "type": "object",
+                            "required": [
+                              "total",
+                              "installed",
+                              "faulty",
+                              "decommissioned"
+                            ],
+                            "properties": {
+                              "total": {
+                                "type": "integer"
+                              },
+                              "installed": {
+                                "type": "integer"
+                              },
+                              "faulty": {
+                                "type": "integer"
+                              },
+                              "decommissioned": {
+                                "type": "integer"
+                              }
+                            }
+                          },
+                          "children": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "level",
+                                "code",
+                                "name",
+                                "path",
+                                "meters",
+                                "children"
+                              ],
+                              "properties": {
+                                "level": {
+                                  "type": "string",
+                                  "enum": [
+                                    "circle"
+                                  ]
+                                },
+                                "code": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "path": {
+                                  "type": "string",
+                                  "description": "Codes from the zone down, joined with \"/\". Use this, not code, to identify a node."
+                                },
+                                "meters": {
+                                  "type": "object",
+                                  "required": [
+                                    "total",
+                                    "installed",
+                                    "faulty",
+                                    "decommissioned"
+                                  ],
+                                  "properties": {
+                                    "total": {
+                                      "type": "integer"
+                                    },
+                                    "installed": {
+                                      "type": "integer"
+                                    },
+                                    "faulty": {
+                                      "type": "integer"
+                                    },
+                                    "decommissioned": {
+                                      "type": "integer"
+                                    }
+                                  }
+                                },
+                                "children": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "required": [
+                                      "level",
+                                      "code",
+                                      "name",
+                                      "path",
+                                      "meters",
+                                      "children"
+                                    ],
+                                    "properties": {
+                                      "level": {
+                                        "type": "string",
+                                        "enum": [
+                                          "division"
+                                        ]
+                                      },
+                                      "code": {
+                                        "type": "string"
+                                      },
+                                      "name": {
+                                        "type": "string"
+                                      },
+                                      "path": {
+                                        "type": "string",
+                                        "description": "Codes from the zone down, joined with \"/\". Use this, not code, to identify a node."
+                                      },
+                                      "meters": {
+                                        "type": "object",
+                                        "required": [
+                                          "total",
+                                          "installed",
+                                          "faulty",
+                                          "decommissioned"
+                                        ],
+                                        "properties": {
+                                          "total": {
+                                            "type": "integer"
+                                          },
+                                          "installed": {
+                                            "type": "integer"
+                                          },
+                                          "faulty": {
+                                            "type": "integer"
+                                          },
+                                          "decommissioned": {
+                                            "type": "integer"
+                                          }
+                                        }
+                                      },
+                                      "children": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "required": [
+                                            "level",
+                                            "code",
+                                            "name",
+                                            "path",
+                                            "meters",
+                                            "children"
+                                          ],
+                                          "properties": {
+                                            "level": {
+                                              "type": "string",
+                                              "enum": [
+                                                "subdivision"
+                                              ]
+                                            },
+                                            "code": {
+                                              "type": "string"
+                                            },
+                                            "name": {
+                                              "type": "string"
+                                            },
+                                            "path": {
+                                              "type": "string",
+                                              "description": "Codes from the zone down, joined with \"/\". Use this, not code, to identify a node."
+                                            },
+                                            "meters": {
+                                              "type": "object",
+                                              "required": [
+                                                "total",
+                                                "installed",
+                                                "faulty",
+                                                "decommissioned"
+                                              ],
+                                              "properties": {
+                                                "total": {
+                                                  "type": "integer"
+                                                },
+                                                "installed": {
+                                                  "type": "integer"
+                                                },
+                                                "faulty": {
+                                                  "type": "integer"
+                                                },
+                                                "decommissioned": {
+                                                  "type": "integer"
+                                                }
+                                              }
+                                            },
+                                            "children": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "object",
+                                                "required": [
+                                                  "level",
+                                                  "code",
+                                                  "name",
+                                                  "path",
+                                                  "meters",
+                                                  "children"
+                                                ],
+                                                "properties": {
+                                                  "level": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "substation"
+                                                    ]
+                                                  },
+                                                  "code": {
+                                                    "type": "string"
+                                                  },
+                                                  "name": {
+                                                    "type": "string"
+                                                  },
+                                                  "path": {
+                                                    "type": "string",
+                                                    "description": "Codes from the zone down, joined with \"/\". Use this, not code, to identify a node."
+                                                  },
+                                                  "meters": {
+                                                    "type": "object",
+                                                    "required": [
+                                                      "total",
+                                                      "installed",
+                                                      "faulty",
+                                                      "decommissioned"
+                                                    ],
+                                                    "properties": {
+                                                      "total": {
+                                                        "type": "integer"
+                                                      },
+                                                      "installed": {
+                                                        "type": "integer"
+                                                      },
+                                                      "faulty": {
+                                                        "type": "integer"
+                                                      },
+                                                      "decommissioned": {
+                                                        "type": "integer"
+                                                      }
+                                                    }
+                                                  },
+                                                  "children": {
+                                                    "type": "array",
+                                                    "items": {
+                                                      "type": "object",
+                                                      "required": [
+                                                        "level",
+                                                        "code",
+                                                        "name",
+                                                        "path",
+                                                        "meters",
+                                                        "children"
+                                                      ],
+                                                      "properties": {
+                                                        "level": {
+                                                          "type": "string",
+                                                          "enum": [
+                                                            "feeder"
+                                                          ]
+                                                        },
+                                                        "code": {
+                                                          "type": "string"
+                                                        },
+                                                        "name": {
+                                                          "type": "string"
+                                                        },
+                                                        "path": {
+                                                          "type": "string",
+                                                          "description": "Codes from the zone down, joined with \"/\". Use this, not code, to identify a node."
+                                                        },
+                                                        "meters": {
+                                                          "type": "object",
+                                                          "required": [
+                                                            "total",
+                                                            "installed",
+                                                            "faulty",
+                                                            "decommissioned"
+                                                          ],
+                                                          "properties": {
+                                                            "total": {
+                                                              "type": "integer"
+                                                            },
+                                                            "installed": {
+                                                              "type": "integer"
+                                                            },
+                                                            "faulty": {
+                                                              "type": "integer"
+                                                            },
+                                                            "decommissioned": {
+                                                              "type": "integer"
+                                                            }
+                                                          }
+                                                        },
+                                                        "children": {
+                                                          "type": "array",
+                                                          "items": {
+                                                            "type": "object",
+                                                            "required": [
+                                                              "level",
+                                                              "code",
+                                                              "name",
+                                                              "path",
+                                                              "meters",
+                                                              "children"
+                                                            ],
+                                                            "properties": {
+                                                              "level": {
+                                                                "type": "string",
+                                                                "enum": [
+                                                                  "transformer"
+                                                                ]
+                                                              },
+                                                              "code": {
+                                                                "type": "string"
+                                                              },
+                                                              "name": {
+                                                                "type": "string"
+                                                              },
+                                                              "path": {
+                                                                "type": "string",
+                                                                "description": "Codes from the zone down, joined with \"/\". Use this, not code, to identify a node."
+                                                              },
+                                                              "meters": {
+                                                                "type": "object",
+                                                                "required": [
+                                                                  "total",
+                                                                  "installed",
+                                                                  "faulty",
+                                                                  "decommissioned"
+                                                                ],
+                                                                "properties": {
+                                                                  "total": {
+                                                                    "type": "integer"
+                                                                  },
+                                                                  "installed": {
+                                                                    "type": "integer"
+                                                                  },
+                                                                  "faulty": {
+                                                                    "type": "integer"
+                                                                  },
+                                                                  "decommissioned": {
+                                                                    "type": "integer"
+                                                                  }
+                                                                }
+                                                              },
+                                                              "children": {
+                                                                "type": "array",
+                                                                "items": {},
+                                                                "maxItems": 0
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "dataQuality": {
+                      "type": "object",
+                      "required": [
+                        "repairs",
+                        "reusedCodes"
+                      ],
+                      "properties": {
+                        "repairs": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "meterId",
+                              "level",
+                              "field",
+                              "portalValue",
+                              "resolvedTo"
+                            ],
+                            "properties": {
+                              "meterId": {
+                                "type": "string"
+                              },
+                              "level": {
+                                "enum": [
+                                  "zone",
+                                  "circle",
+                                  "division",
+                                  "subdivision",
+                                  "substation",
+                                  "feeder",
+                                  "transformer"
+                                ]
+                              },
+                              "field": {
+                                "enum": [
+                                  "code",
+                                  "name"
+                                ]
+                              },
+                              "portalValue": {
+                                "type": "string"
+                              },
+                              "resolvedTo": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "reusedCodes": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "level",
+                              "code",
+                              "parents"
+                            ],
+                            "properties": {
+                              "level": {
+                                "enum": [
+                                  "zone",
+                                  "circle",
+                                  "division",
+                                  "subdivision",
+                                  "substation",
+                                  "feeder",
+                                  "transformer"
+                                ]
+                              },
+                              "code": {
+                                "type": "string"
+                              },
+                              "parents": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Paths of the different parents this code appears under."
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Every error has this shape.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "examples": [
+                            "not_found"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "description": "Every error has this shape."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Every error has this shape.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "examples": [
+                            "not_found"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "description": "Every error has this shape."
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The portal failed or answered something unexpected.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "examples": [
+                            "not_found"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "description": "The portal failed or answered something unexpected."
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The portal is rate-limiting us. Retry after the number of seconds in the Retry-After header.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "examples": [
+                            "not_found"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "description": "The portal is rate-limiting us. Retry after the number of seconds in the Retry-After header."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "getHealth",
+        "summary": "Whether the service has data, and how fresh it is",
+        "tags": [
+          "service"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "status",
+                    "syncedAt",
+                    "meters",
+                    "lastError"
+                  ],
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "ok",
+                        "degraded",
+                        "down"
+                      ],
+                      "description": "degraded: the last refresh failed, so older data is being served. down: no data yet."
+                    },
+                    "syncedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "When the data was last copied from the portal."
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "meters": {
+                      "type": "integer"
+                    },
+                    "lastError": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "status",
+                    "syncedAt",
+                    "meters",
+                    "lastError"
+                  ],
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "ok",
+                        "degraded",
+                        "down"
+                      ],
+                      "description": "degraded: the last refresh failed, so older data is being served. down: no data yet."
+                    },
+                    "syncedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "When the data was last copied from the portal."
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "meters": {
+                      "type": "integer"
+                    },
+                    "lastError": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000"
+    }
+  ],
+  "security": [],
+  "tags": [
+    {
+      "name": "meters",
+      "description": "Meters and their readings"
+    },
+    {
+      "name": "network",
+      "description": "Transformers and the network hierarchy"
+    },
+    {
+      "name": "service",
+      "description": "The service itself"
+    }
+  ]
+}
