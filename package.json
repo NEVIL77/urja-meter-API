@@ -1,0 +1,26 @@
+{
+  "name": "urja-meter-api-express",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A clean, documented REST API over the Urja Meter Ops portal, built on Express",
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/main.ts",
+    "test": "node --test \"test/*.test.ts\"",
+    "typecheck": "tsc --noEmit",
+    "openapi": "node scripts/export-openapi.ts"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "express": "^5.1.0",
+    "swagger-ui-express": "^5.0.1",
+    "typebox": "^1.4.3"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.19.2",
+    "@types/swagger-ui-express": "^4.1.8",
+    "typescript": "^5.9.3"
+  }
+}
