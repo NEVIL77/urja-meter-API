@@ -1,29 +1,9 @@
-// The only module that talks to the Urja Meter Ops portal. Everything the
-// portal returns is typed here exactly as it arrives; domain.ts turns it into
-// the clean shapes the API serves. See PROTOCOL.md for how each call works.
 import { createHmac } from 'node:crypto';
+import type { RawNode, RawExportMeter, RawTransformer, RawReading, PortalOptions, HeaderMap } from './portal.types.js';
 
 export const PORTAL_LEVELS = ['zone', 'circle', 'division', 'subdivision', 'substation', 'feeder', 'dt'] as const;
 export type PortalLevel = (typeof PORTAL_LEVELS)[number];
-
-export interface RawNode { code: string; name: string }
-
-export interface RawExportMeter {
-  meterId: string;
-  serialNo: string;
-  make: string;
-  phaseType: string;
-  installStatus: string;
-  installType: string;
-  dtCode: string;
-  build: string;
-  geo: { lat: number; lng: number };
-  hierarchy: Record<PortalLevel, RawNode>;
-}
-
-export interface RawTransformer { code: string; name: string; feederCode: string; capacityKva: number }
-
-export interface RawReading { timestamp: string; kwh: string; kvah: string; voltR: string }
+export type { RawNode, RawExportMeter, RawTransformer, RawReading, PortalOptions };
 
 export class PortalError extends Error {
   readonly status: number | undefined;
@@ -34,26 +14,13 @@ export class PortalError extends Error {
   }
 }
 
-export interface PortalOptions {
-  baseUrl: string;
-  email: string;
-  password: string;
-  timeoutMs?: number;
-  retryDelaysMs?: number[];
-  /** Our own pacing, to stay under the portal's rate limit (about 120 requests a minute, see PROTOCOL.md). */
-  rate?: { burst: number; perSecond: number };
-}
-
-type HeaderMap = Record<string, string>;
-
 export class PortalClient {
   readonly #opts: Required<PortalOptions>;
   readonly #cookies = new Map<string, string>();
   #signingIn: Promise<void> | null = null;
-  #sessionNumber = 0; // goes up on every sign-in
+  #sessionNumber = 0;
   #secret: string | null = null;
-  // Portal clock minus ours. Export signatures are only accepted within ±300 s
-  // of the portal's clock, so we sign with its time rather than ours.
+
   #skewMs = 0;
   #tokens: number;
   #tokensAt = Date.now();
@@ -63,9 +30,9 @@ export class PortalClient {
     this.#tokens = this.#opts.rate.burst;
   }
 
-  /** Every meter with its hierarchy and location, in one signed call. */
+  
   async exportMeters(): Promise<RawExportMeter[]> {
-    // The portal ignores `page`: any value returns the whole dataset.
+  
     return dataOf<RawExportMeter[]>(await this.#signedGet('/portal/export', 'page=1'), true);
   }
 
@@ -79,8 +46,7 @@ export class PortalClient {
       if (rows.length === 0 || all.length >= total) return all;
     }
   }
-
-  /** Readings for one meter, or null when the portal does not know the meter. */
+  
   async readings(meterId: string): Promise<RawReading[] | null> {
     const res = await this.#request(`/portal/meters/${encodeURIComponent(meterId)}/energy`);
     if (res.status === 404) return null;
@@ -88,7 +54,6 @@ export class PortalClient {
     return dataOf<RawReading[]>(await res.json(), true);
   }
 
-  /** Signs in. Concurrent callers that all found an expired session share one sign-in. */
   signIn(): Promise<void> {
     this.#signingIn ??= this.#doSignIn().finally(() => {
       this.#signingIn = null;
@@ -98,8 +63,7 @@ export class PortalClient {
 
   async #doSignIn(): Promise<void> {
     this.#cookies.clear();
-    // The login page is a SvelteKit form action. With `x-sveltekit-action` it
-    // answers JSON: {type:"redirect"} on success, {type:"failure"} otherwise.
+
     const res = await this.#send('/login', () => ({
       'content-type': 'application/x-www-form-urlencoded',
       accept: 'application/json',
@@ -118,12 +82,11 @@ export class PortalClient {
       const secret = this.#secret;
       const res = await this.#request(`${path}?${query}`, () => {
         const ts = String(Math.floor((Date.now() + this.#skewMs) / 1000));
-        const signature = createHmac('sha256', secret).update(['GET', path, query, ts].join('\n')).digest('hex');
+        const signature = createHmac('sha256', secret).update(['GET', path, query, ts].join('\n')).digest('hex'); // for export signature 
         return { 'x-timestamp': ts, 'x-signature': signature };
       });
       if (res.ok) return res.json();
-      // A rejected signature means the secret rotated or our clock estimate was
-      // off; the response has just refreshed the estimate, so fetch the secret again once.
+
       if (res.status === 401 && attempt === 1) {
         this.#secret = null;
         continue;
@@ -138,13 +101,12 @@ export class PortalClient {
     return res.json();
   }
 
-  /** A request with a session: signs in first if needed, and once more if the session expired. */
   async #request(path: string, headers: () => HeaderMap = () => ({})): Promise<Response> {
     if (this.#cookies.size === 0) await this.signIn();
     const session = this.#sessionNumber;
     let res = await this.#send(path, headers);
     if (res.status === 401 && (await errorCode(res)) === 'unauthorized') {
-      // Sessions last an hour. Sign in again, unless another request already did while this one was in flight.
+
       if (session === this.#sessionNumber) await this.signIn();
       res = await this.#send(path, headers);
     }
@@ -152,8 +114,7 @@ export class PortalClient {
   }
 
   /**
-   * One HTTP call, retried on network errors, timeouts and 5xx. Not on 429:
-   * the portal then blocks for about a minute, so retrying only adds load.
+   * 
    */
   async #send(path: string, headers: () => HeaderMap, body?: string): Promise<Response> {
     const delays = this.#opts.retryDelaysMs;
@@ -162,7 +123,7 @@ export class PortalClient {
       try {
         const res = await fetch(this.#opts.baseUrl + path, {
           method: body === undefined ? 'GET' : 'POST',
-          // SvelteKit rejects form posts whose Origin is not its own.
+
           headers: { ...headers(), cookie: this.#cookieHeader(), origin: this.#opts.baseUrl },
           body,
           redirect: 'manual',
@@ -215,7 +176,6 @@ export class PortalClient {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/** Unwraps the portal's `{data: ...}` envelope, failing loudly if the shape changed. */
 function dataOf<T>(body: unknown, array = false): T {
   const data = (body as { data?: unknown } | null)?.data;
   if (data === undefined || data === null || (array && !Array.isArray(data))) {
