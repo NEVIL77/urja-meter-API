@@ -1,9 +1,12 @@
+# What this project actually is
+
+A facade API that sits between external consumers and the portal. It hides the portal, normalizes its data, and shields it with caching.
+
 # How to run
 
 You need **Node.js 24** or newer.
 
 1. Clone the project and open this folder.
-
 2. make `.env` and fill in the portal login:
 
 ```
@@ -14,6 +17,7 @@ PORTAL_PASSWORD=
 PORT=3000
 SNAPSHOT_TTL_SECONDS=900
 ```
+
 here please enter the portal email and password , if help needed see the PROTOCOL.md for email and password.
 
 3. Install dependencies:
@@ -45,8 +49,6 @@ API list
 | `GET /hierarchy` | The network as a tree from zone down to transformer, with meter counts at every node, plus a data-quality report. |
 | `GET /health` | `ok`, `degraded` (the last refresh failed, so older data is being served) or `down` (no data yet), with the time of the last sync. |
 
-
-
 ## How it is built
 
 ```
@@ -62,17 +64,42 @@ API list
                Urja Meter Ops portal
 ```
 
+## Data Flow
 
-| File | Job |
-|---|---|
-| [src/portal.ts](./src/portal.ts) | The only code that talks to the portal. Raw portal types live here. |
-| [src/domain.ts](./src/domain.ts) | The API's schemas (TypeBox) and the functions that clean raw records |
-| [src/hierarchy.ts](./src/hierarchy.ts) | Hierarchy repair, the tree, and reused-code detection |
-| [src/store.ts](./src/store.ts) | The snapshot, refresh and caching, filters and distance search |
-| [src/app.ts](./src/app.ts) | Express app. One route table registers each handler, its request validation (Ajv) and its OpenAPI entry. |
-| [src/openapi.ts](./src/openapi.ts) | Builds `openapi.json` from that route table |
-| [src/main.ts](./src/main.ts) | Reads settings and starts everything |
-| [scripts/export-openapi.ts](./scripts/export-openapi.ts) | Writes `openapi.json` |
+Urja Meter Ops Portal  
+        ↓  
+`PortalClient` — Authenticates and fetches data  
+        ↓  
+Raw Data — `RawExportMeter[]`, `RawTransformer[]`, `RawReading[]`  
+        ↓  
+`domain.ts` — Transforms raw data into clean API data shapes  
+        ↓  
+`hierarchy.ts` — Repairs the per-meter hierarchy copies and builds the tree  
+        ↓  
+`Store` — Keeps the clean snapshot in memory (refreshed every `SNAPSHOT_TTL_SECONDS`), caches readings for 5 minutes, runs filters and searches  
+        ↓  
+`buildApp` (`app.ts`) — Validates the request, calls the Store, returns JSON, maps errors  
+        ↓  
+Consumer — Gets clean JSON from `/meters`, `/transformers`, `/hierarchy`, `/health`; docs at `/docs`
+
+
+## Each file and what it does 
+
+*`portal.ts` ( PortalClient )  → fetches data.*
+
+*`store.ts` ( Store )          → manages data.*
+
+*`app.ts` ( buildApp )         → exposes data through your own APIs.*
+
+*`domain.ts`                   → cleans raw data into the API's own shapes.*
+
+*`hierarchy.ts`                → repairs the network hierarchy and builds the tree.*
+
+*`openapi.ts`                  → generates `openapi.json` from the routes.*
+
+*`main.ts`                     → loads settings and starts everything.*
+
+*`scripts/export-openapi.ts`   → writes `openapi.json` to disk.*
 
 
 
