@@ -10,6 +10,10 @@ A facade API that sits between external consumers and the portal. It hides the p
 - [openapi.json](./openapi.json) — the OpenAPI description of this API. A rendered view is at `http://localhost:3000/docs` once the API is running.
 - [REFLECTION.md](./REFLECTION.md) — my reflection answers.
 
+## Demo video
+
+▶️ **[Watch the demo video](https://www.awesomescreenshot.com/video/57765041?key=fed8d9f5504ecce361ca79cf4a2e7808)**
+
 ## How to run
 
 You need **Node.js 24** or newer.
